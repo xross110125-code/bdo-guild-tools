@@ -22,9 +22,10 @@ jobs:
       - name: Check sources
         run: python3 newswatch/newswatch.py
         env:
-          # ソースを増やしてもこのファイルを書き換えなくて済むよう、Secrets をまとめて渡す。
-          # スクリプトは NEWSWATCH_WEBHOOK_ で始まるものだけを使う
-          NEWSWATCH_SECRETS: ${{ toJSON(secrets) }}
+          # ソースごとの Webhook。ソースを足したら、ここにも1行足す
+          NEWSWATCH_WEBHOOK_GLOBALLAB: ${{ secrets.NEWSWATCH_WEBHOOK_GLOBALLAB }}
+          NEWSWATCH_WEBHOOK_JP_UPDATE: ${{ secrets.NEWSWATCH_WEBHOOK_JP_UPDATE }}
+          NEWSWATCH_WEBHOOK_JP_EVENT: ${{ secrets.NEWSWATCH_WEBHOOK_JP_EVENT }}
 
       - name: Commit state
         run: |
