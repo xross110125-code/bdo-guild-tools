@@ -8,9 +8,9 @@
 
 ## ツール一覧
 
-| ツール | 内容 | 必要な Secret |
-|---|---|---|
-| [グローバルラボ更新通知](#グローバルラボ更新通知globallab) | グローバルラボ（テスト鯖）の週次アップデート告知を Discord に投稿 | `GLOBALLAB_WEBHOOK_URL` |
+| ツール | 内容 | 必要な Secret | 仕様書 |
+|---|---|---|---|
+| [グローバルラボ更新通知](#グローバルラボ更新通知globallab) | グローバルラボ（テスト鯖）の週次アップデート告知を Discord に投稿 | `GLOBALLAB_WEBHOOK_URL` | [globallab/README.md](globallab/README.md) |
 
 ## 導入手順（共通）
 
