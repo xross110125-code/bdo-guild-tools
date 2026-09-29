@@ -30,13 +30,15 @@ class ListParser(HTMLParser):
     同じ記事が一覧の複数か所に出ることがあるため、番号で重複を除く。
     <a> 内の全テキストを使うとカテゴリ名や日付が混ざるので、title_class の要素だけを読む。
     リンク内に title_class の要素が複数ある場合（副題にも同じクラスが付く等）は最初の1つだけ読む。
+    link_attr を指定すると、その属性を持つ <a> だけを記事リンクとみなす（全ページ共通の枠を除くため）。
     """
 
-    def __init__(self, base_url, id_param, title_class):
+    def __init__(self, base_url, id_param, title_class, link_attr=None):
         super().__init__()  # convert_charrefs=True: &#xC5C5; などの数値参照はここでデコードされる
         self.base_url = base_url
         self.id_param = id_param
         self.title_class = title_class
+        self.link_attr = link_attr
         self.items = {}  # 記事番号 -> (url, title)
         self._href = None
         self._title_tag = None  # title 要素の中にいる間、そのタグ名
@@ -52,7 +54,8 @@ class ListParser(HTMLParser):
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         href = a.get("href") or ""
-        if tag == "a" and self._article_no(href) is not None:
+        if (tag == "a" and self._article_no(href) is not None
+                and (not self.link_attr or self.link_attr in a)):
             self._href = href
             self._title_tag = None
             self._title_done = False
@@ -142,7 +145,8 @@ def post(webhook, content):
 def fetch_items(source):
     req = urllib.request.Request(source["list_url"], headers={"User-Agent": UA})
     html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
-    parser = ListParser(source["list_url"], source["id_param"], source["title_class"])
+    parser = ListParser(source["list_url"], source["id_param"], source["title_class"],
+                        source.get("link_attr"))
     parser.feed(html)
     if not parser.items:
         raise RuntimeError("一覧から記事を1件も読み取れませんでした")
