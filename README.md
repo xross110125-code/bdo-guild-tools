@@ -49,7 +49,8 @@ Discord 側で Webhook を削除すれば投稿は止まります。リポジト
 | ID | 内容 | Secret 名 |
 |---|---|---|
 | `globallab` | グローバルラボ（韓国テスト鯖）の週次アップデート告知。セキュリティモジュール更新は除く | `NEWSWATCH_WEBHOOK_GLOBALLAB` |
-| `jp-update` | 日本公式のアップデート告知。セキュリティモジュール・公式ホームページの更新は除く | `NEWSWATCH_WEBHOOK_JP_UPDATE` |
+| `jp-update` | 日本公式のアップデート告知。セキュリティモジュール・公式ホームページ・「黒い砂漠+」の更新は除く | `NEWSWATCH_WEBHOOK_JP_UPDATE` |
+| `jp-event` | 日本公式のイベント告知（イベントタブの新着すべて） | `NEWSWATCH_WEBHOOK_JP_EVENT` |
 
 **Secret を登録したものだけが動きます。** 同じ Webhook URL を複数の Secret に登録すれば、同じチャンネルにまとめて流せます。
 
