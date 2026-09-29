@@ -14,6 +14,7 @@ import json
 import os
 import sys
 import urllib.request
+from datetime import date, datetime, timezone
 from html.parser import HTMLParser
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -168,6 +169,36 @@ def dry_run(sources, since):
             print(f"   [{mark}] {no} {title}\n          {url}")
 
 
+def today():
+    return datetime.now(timezone.utc).date()
+
+
+def check_quiet(source, webhook, st):
+    """投稿対象が quiet_days 日以上見つかっていなければ、一度だけ警告する。書き換えたら True。
+
+    告知タイトルの書き方が変わって include の語を含まなくなると、取得は成功し続けるので
+    取得失敗の警告では気づけない。その「黙って止まる」壊れ方を拾うための見張り。
+    """
+    days = source.get("quiet_days") or 0
+    last = st.get("last_target_date")
+    if not days or not last or st.get("quiet_notified"):
+        return False
+    quiet = (today() - date.fromisoformat(last)).days
+    if quiet < days:
+        return False
+    try:
+        post(webhook,
+             f"⚠️ {source['name']}：{quiet} 日間、投稿対象の告知が見つかっていません。\n"
+             "告知が出ていないだけかもしれませんが、公式の告知タイトルの書き方が変わった可能性もあります。\n"
+             f"<{source['list_url']}>")
+    except Exception as e:
+        print(f"[{source['id']}] 無投稿警告の投稿に失敗: {e}")
+        return False
+    print(f"[{source['id']}] 無投稿警告: {quiet} 日")
+    st["quiet_notified"] = True
+    return True
+
+
 def run_source(source, webhook, st):
     """1ソース分を処理する。st はそのソースの状態（dict）で、書き換えたら True を返す。"""
     sid = source["id"]
@@ -194,8 +225,14 @@ def run_source(source, webhook, st):
     if last is None:
         # 初回は過去分を流さず、現在地だけ記録する
         st["last_no"] = max(items)
+        st["last_target_date"] = today().isoformat()
         print(f"[{sid}] 初期化: last_no = {st['last_no']}")
         return True
+
+    if "last_target_date" not in st:
+        # 無投稿警告を入れる前の状態ファイル。今日を起点にする
+        st["last_target_date"] = today().isoformat()
+        dirty = True
 
     for no in sorted(items):
         if no <= last:
@@ -209,7 +246,12 @@ def run_source(source, webhook, st):
                 print(f"[{sid}] 投稿失敗 {no}: {e}")
                 break
             print(f"[{sid}] 投稿: {no} {title}")
+            st["last_target_date"] = today().isoformat()
+            st.pop("quiet_notified", None)
         st["last_no"] = no
+        dirty = True
+
+    if check_quiet(source, webhook, st):
         dirty = True
     return dirty
 
