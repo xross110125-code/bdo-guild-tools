@@ -1,0 +1,38 @@
+name: News Watch
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # 毎時17分（UTC）
+  workflow_dispatch:        # 手動実行ボタン
+
+permissions:
+  contents: write           # newswatch/state.json をコミットするため
+
+concurrency:
+  group: newswatch
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check sources
+        run: python3 newswatch/newswatch.py
+        env:
+          # ソースを増やしてもこのファイルを書き換えなくて済むよう、Secrets をまとめて渡す。
+          # スクリプトは NEWSWATCH_WEBHOOK_ で始まるものだけを使う
+          NEWSWATCH_SECRETS: ${{ toJSON(secrets) }}
+
+      - name: Commit state
+        run: |
+          if [ -n "$(git status --porcelain newswatch/state.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add newswatch/state.json
+            git commit -m "newswatch: update state"
+            git pull --rebase
+            git push
+          fi

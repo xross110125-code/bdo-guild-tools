@@ -4,13 +4,13 @@
 
 - 費用：無料（公開リポジトリの GitHub Actions で動きます）
 - 外部ライブラリ：なし（Python 標準ライブラリのみ）
-- 使いたいツールだけ有効化できます。Secrets を登録していないツールは何もしません
+- 使いたいものだけ有効化できます。Secret を登録していないものは何もしません
 
 ## ツール一覧
 
-| ツール | 内容 | 必要な Secret | 仕様書 |
-|---|---|---|---|
-| [グローバルラボ更新通知](#グローバルラボ更新通知globallab) | グローバルラボ（テスト鯖）の週次アップデート告知を Discord に投稿 | `GLOBALLAB_WEBHOOK_URL` | [globallab/README.md](globallab/README.md) |
+| ツール | 内容 | 仕様書 |
+|---|---|---|
+| [ニュース監視（newswatch）](#ニュース監視newswatch) | 公式サイトのお知らせ一覧を見張り、新着を Discord に投稿 | [newswatch/README.md](newswatch/README.md) |
 
 ## 導入手順（共通）
 
@@ -22,7 +22,7 @@
 3. **Settings → Actions → General → Workflow permissions** を
    「**Read and write permissions**」にして Save
    （ツールが状態ファイルをコミットするために必要です）
-4. 使いたいツールの Secret を登録する（各ツールの項目を参照）
+4. 使いたいものの Secret を登録する（各ツールの項目を参照）
    - **Settings → Secrets and variables → Actions → New repository secret**
 5. Actions タブから対象のワークフローを選び、**Run workflow** で一度手動実行する
 
@@ -39,33 +39,42 @@ Webhook URL などの Secret は、コード・README・Issue などに**絶対�
 Discord 側で Webhook を削除すれば投稿は止まります。リポジトリ側の操作は不要です。
 完全に止めたい場合は、Actions タブでワークフローを無効化するか、フォークを削除してください。
 
-## グローバルラボ更新通知（globallab）
+## ニュース監視（newswatch）
 
-黒い砂漠グローバルラボの週次アップデート告知（업데이트 안내）を検知して、
-タイトルと原文 URL を Discord チャンネルに投稿します。翻訳はしません。
+公式サイトのお知らせ一覧を毎時チェックし、条件に合う新着記事のタイトルと URL を Discord に投稿します。
+翻訳はしません。
 
-- 取得元：<https://blackdesert.pearlabyss.com/GlobalLab/en-US/News/Notice?_categoryNo=2>
-- 実行頻度：毎時（告知が無い週もあり、その場合は何も投稿されません）
-- セキュリティモジュール更新（보안 모듈）の告知は投稿しません
-- 投稿例：
-  > 📢 **グローバルラボ更新**<br>
-  > 9월 18일(금) 업데이트 안내<br>
-  > https://blackdesert.pearlabyss.com/GlobalLab/en-US/News/Notice/Detail?_boardNo=19837<br>
-  > ※原文は韓国語です。ブラウザの翻訳機能で読めます。テスト鯖の情報のため、日本鯖への適用時期・内容は未定です。
+最初から用意してある監視対象：
+
+| ID | 内容 | Secret 名 |
+|---|---|---|
+| `globallab` | グローバルラボ（韓国テスト鯖）の週次アップデート告知。セキュリティモジュール更新は除く | `NEWSWATCH_WEBHOOK_GLOBALLAB` |
+| `jp-update` | 日本公式のアップデート告知。セキュリティモジュール・公式ホームページの更新は除く | `NEWSWATCH_WEBHOOK_JP_UPDATE` |
+
+**Secret を登録したものだけが動きます。** 同じ Webhook URL を複数の Secret に登録すれば、同じチャンネルにまとめて流せます。
+
+投稿例：
+
+> 📢 **グローバルラボ更新**<br>
+> 9월 18일(금) 업데이트 안내<br>
+> https://blackdesert.pearlabyss.com/GlobalLab/en-US/News/Notice/Detail?_boardNo=19837<br>
+> ※原文は韓国語です。ブラウザの翻訳機能で読めます。テスト鯖の情報のため、日本鯖への適用時期・内容は未定です。
 
 ### 設定
 
 1. Discord で投稿先チャンネルの Webhook URL を作る
    （チャンネルの編集 → 連携サービス → ウェブフック → 新しいウェブフック → URL をコピー）
-2. `GLOBALLAB_WEBHOOK_URL` という名前で Secret に登録
-3. Actions タブ → **Global Lab Notifier** → **Run workflow** で一度手動実行
+2. 上の表の Secret 名で、Webhook URL を登録
+3. Actions タブ → **News Watch** → **Run workflow** で一度手動実行
 
-初回は過去の告知を流さず、現在の最新記事番号を `globallab/state.json` に記録するだけです。
+初回は過去の告知を流さず、現在の最新記事番号を `newswatch/state.json` に記録するだけです。
 以降、毎時チェックして新しい告知があれば投稿します。
+
+監視対象を自分で増やすこともできます。方法は [仕様書](newswatch/README.md#新しいソースの足し方) を参照してください。
 
 ### 動作確認したいとき
 
-初回実行でできた `globallab/state.json` の `last_board_no` を少し小さい数字
+初回実行でできた `newswatch/state.json` の `last_no` を少し小さい数字
 （例：記録されている番号 − 100）に書き換えてコミットし、手動実行すると、その間の告知が投稿されます。
 
 ### 異常時の動き
@@ -77,23 +86,20 @@ Discord 側で Webhook を削除すれば投稿は止まります。リポジト
 ### 補足
 
 - 公開リポジトリでは、60 日間リポジトリに動きがないと定期実行が自動停止されます。
-  新着のたびに `globallab/state.json` がコミットされるので、告知が続く限り止まりません。
+  新着のたびに `newswatch/state.json` がコミットされるので、告知が続く限り止まりません。
   止まってしまった場合は Actions タブから再度有効化してください
+- 常設ページ（「今週のイベントは？」など）の中身の更新は検知しません。新しい記事が出たときだけ投稿します
 
 ## 開発者向け
 
-```
-python globallab/notify.py --dry-run               # 投稿・状態保存をせず、一覧の検出結果を表示
-python globallab/notify.py --dry-run --since 19800 # 記事番号 19800 より後だけ表示
-```
-
 ### 規約
 
-- ツールごとにフォルダを分け、コードと状態ファイルはフォルダ内で閉じる（例：`globallab/`）
+- ツールごとにフォルダを分け、コードと状態ファイルはフォルダ内で閉じる（例：`newswatch/`）
 - ワークフローは `.github/workflows/<ツール名>.yml`
-- Secret 名にはツール名を入れる（例：`GLOBALLAB_WEBHOOK_URL`）。未登録なら何もせず正常終了する
+- Secret 名にはツール名を入れる（例：`NEWSWATCH_WEBHOOK_GLOBALLAB`）。未登録なら何もせず正常終了する
 - 依存は Python 標準ライブラリのみ
 - 異常は投稿先に一度だけ警告し、ワークフローは失敗扱いにしない
+- 利用者が書き換えるファイル（状態・利用者設定）は配布元に置かない（Sync fork で衝突させないため）
 
 ## ライセンス
 
