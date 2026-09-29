@@ -81,7 +81,10 @@
 3. フォーク側に `newswatch/sources.custom.json` を作り、ソースを配列で書く
    （`sources.json` と同じ形。1件でも `[ ]` で囲む）
 4. Secret `NEWSWATCH_WEBHOOK_<ID>` を登録する
-5. 手元で確認できるなら `python newswatch/newswatch.py --dry-run --source <id>` で判定結果を見る
+5. `.github/workflows/newswatch.yml` の `env:` に
+   `NEWSWATCH_WEBHOOK_<ID>: ${{ secrets.NEWSWATCH_WEBHOOK_<ID> }}` の1行を足す
+   （このファイルは配布元にもあるので、配布元が同じ箇所を変えると Sync fork で衝突しうる）
+6. 手元で確認できるなら `python newswatch/newswatch.py --dry-run --source <id>` で判定結果を見る
 
 条件：一覧が JavaScript なしの HTML で返ること、記事ごとに**増えていく数字の ID** があること。
 この2つを満たさないページは、このツールでは見張れない。
@@ -201,8 +204,10 @@
 ## 実行
 
 - 毎時 17 分（UTC）。告知が無い時間帯に何も投稿されないのは正常
-- Secrets は `toJSON(secrets)` でまとめて渡し、スクリプトが `NEWSWATCH_WEBHOOK_` で始まるものだけを使う。
-  ソースを増やすたびにワークフローを書き換えなくて済むようにするため
+- Secrets はソースごとにワークフローの `env` で1つずつ渡す。
+  当初は `toJSON(secrets)` でまとめて渡していたが、GitHub に「悪意のある可能性があるワークフロー」と判定され、
+  承認するまで実行されなかった（2026-09-29）。Secrets を丸ごと渡す書き方は、Secrets を抜き出す手口と同じ形のため。
+  判定の理由は GitHub から明示されておらず、これが原因というのは推測。明示に変えた後の結果は下記「未検証」
 - `concurrency: newswatch` で、実行が重ならないようにしている
 - `state.json` のコミットの前に `git pull --rebase` する（他のツールが同時にコミットした場合への備え）
 - 公開リポジトリは 60 日間動きがないと定期実行が止まる。新着のたびに `state.json` がコミットされるので、その延命も兼ねる
@@ -224,7 +229,7 @@ python newswatch/newswatch.py --dry-run --source globallab --since 19800  # 1ソ
 
 ## 未検証
 
-- GitHub Actions 上での実行（`toJSON(secrets)` での受け渡しを含む）と、Discord への実際の投稿は、この文書を書いた時点では未確認
+- GitHub Actions 上での実行と、Discord への実際の投稿は、この文書を書いた時点では未確認
 - ワークフローによるコミットが、60 日ルールの「動き」として数えられるかどうか
 - 公式サイトの HTML 構造は予告なく変わりうる。変わって記事が1件も取れなくなれば警告が出る。
   ただし告知タイトルの書き方が変わる（`include` の文言を含まなくなる）などの壊れ方では、

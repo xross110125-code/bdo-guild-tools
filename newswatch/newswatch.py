@@ -110,27 +110,9 @@ def save_state(state):
         f.write("\n")
 
 
-def secret_webhooks():
-    """ワークフローから toJSON(secrets) で渡された Secrets のうち、NEWSWATCH_WEBHOOK_ で始まるものだけ取り出す。
-
-    ソースを増やすたびにワークフローを書き換えなくて済むよう、Secrets はまとめて受け取る。
-    ローカル実行では同名の環境変数でも指定できる。
-    """
-    found = {k: v for k, v in os.environ.items() if k.startswith(WEBHOOK_PREFIX)}
-    try:
-        secrets = json.loads(os.environ.get("NEWSWATCH_SECRETS") or "{}")
-    except ValueError:
-        secrets = {}
-    found.update({k: v for k, v in secrets.items() if k.startswith(WEBHOOK_PREFIX) and v})
-    return found
-
-
-WEBHOOKS = secret_webhooks()
-
-
 def webhook_for(source):
     name = WEBHOOK_PREFIX + source["id"].upper().replace("-", "_")
-    return name, WEBHOOKS.get(name)
+    return name, os.environ.get(name)
 
 
 def post(webhook, content):
