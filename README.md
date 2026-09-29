@@ -58,7 +58,7 @@ Discord 側で Webhook を削除すれば投稿は止まります。リポジト
 
 > 📢 **グローバルラボ更新**<br>
 > 9월 18일(금) 업데이트 안내<br>
-> https://blackdesert.pearlabyss.com/GlobalLab/en-US/News/Notice/Detail?_boardNo=19837<br>
+> https://blackdesert.pearlabyss.com/GlobalLab/ko-KR/News/Notice/Detail?_boardNo=19837<br>
 > ※原文は韓国語です。ブラウザの翻訳機能で読めます。テスト鯖の情報のため、日本鯖への適用時期・内容は未定です。
 
 ### 設定

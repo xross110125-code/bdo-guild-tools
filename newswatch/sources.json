@@ -2,7 +2,7 @@
   {
     "id": "globallab",
     "name": "グローバルラボ更新",
-    "list_url": "https://blackdesert.pearlabyss.com/GlobalLab/en-US/News/Notice?_categoryNo=2",
+    "list_url": "https://blackdesert.pearlabyss.com/GlobalLab/ko-KR/News/Notice?_categoryNo=2",
     "id_param": "_boardNo",
     "title_class": "title",
     "include": ["업데이트 안내"],
