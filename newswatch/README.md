@@ -229,7 +229,8 @@ python newswatch/newswatch.py --dry-run --source globallab --since 19800  # 1ソ
 
 ## 未検証
 
-- GitHub Actions 上での実行と、Discord への実際の投稿は、この文書を書いた時点では未確認
+- ~~GitHub Actions 上での実行と、Discord への実際の投稿~~ → 2026-09-29 に確認済み。
+  3ソースとも投稿され（計7件）、埋め込みプレビューは出ず、`state.json` のコミットも成功した（`actions/checkout@v7`）
 - ワークフローによるコミットが、60 日ルールの「動き」として数えられるかどうか
 - 公式サイトの HTML 構造は予告なく変わりうる。変わって記事が1件も取れなくなれば警告が出る。
   ただし告知タイトルの書き方が変わる（`include` の文言を含まなくなる）などの壊れ方では、
