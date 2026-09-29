@@ -1,0 +1,36 @@
+name: Global Lab Notifier
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # 毎時17分（UTC）
+  workflow_dispatch:        # 手動実行ボタン
+
+permissions:
+  contents: write           # globallab/state.json をコミットするため
+
+concurrency:
+  group: globallab
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Global Lab
+        run: python3 globallab/notify.py
+        env:
+          GLOBALLAB_WEBHOOK_URL: ${{ secrets.GLOBALLAB_WEBHOOK_URL }}
+
+      - name: Commit state
+        run: |
+          if [ -n "$(git status --porcelain globallab/state.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add globallab/state.json
+            git commit -m "globallab: update state"
+            git pull --rebase
+            git push
+          fi
