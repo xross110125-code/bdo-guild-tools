@@ -1,0 +1,22 @@
+[
+  {
+    "id": "globallab",
+    "name": "グローバルラボ更新",
+    "list_url": "https://blackdesert.pearlabyss.com/GlobalLab/en-US/News/Notice?_categoryNo=2",
+    "id_param": "_boardNo",
+    "title_class": "title",
+    "include": ["업데이트 안내"],
+    "exclude": ["보안 모듈"],
+    "note": "※原文は韓国語です。ブラウザの翻訳機能で読めます。テスト鯖の情報のため、日本鯖への適用時期・内容は未定です。"
+  },
+  {
+    "id": "jp-update",
+    "name": "黒い砂漠 日本 アップデート",
+    "list_url": "https://www.jp.playblackdesert.com/ja-JP/News/Notice",
+    "id_param": "groupContentNo",
+    "title_class": "line_clamp",
+    "include": ["アップデートのご案内"],
+    "exclude": ["セキュリティモジュール", "公式ホームページ"],
+    "note": ""
+  }
+]
