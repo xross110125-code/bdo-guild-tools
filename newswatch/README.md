@@ -13,12 +13,16 @@
 | `newswatch/newswatch.py` | 本体。Python 標準ライブラリのみ | ある |
 | `newswatch/sources.json` | 配布しているソース（プリセット） | ある |
 | `newswatch/sources.custom.json` | 利用者が足すソース | **無い**（利用者が作る） |
-| `newswatch/state.json` | 状態ファイル。初回実行時に作られる | **無い** |
+| `newswatch/state.json` | 状態ファイル。初回実行時に作られる | **ある**（下記） |
 | `.github/workflows/newswatch.yml` | 毎時の定期実行と、状態ファイルのコミット | ある |
 | `newswatch/gas/dispatch.gs` | 任意。GAS から定期的にワークフローを起動する（下記「外部からの起動（GAS）」） | ある |
 
-`sources.custom.json` と `state.json` は配布元に置かない。
-配布元が触らないファイルなので、フォーク側で書き換えても Sync fork で衝突しない。
+`sources.custom.json` は配布元に置かない。配布元が触らないファイルなので、フォーク側で書き換えても Sync fork で衝突しない。
+
+`state.json` は当初、同じ理由で配布元に置かない方針だった。
+2026-09-30 から配布元自体をギルドの本番環境として運用しているため、配布元にもある（bot が更新する）。
+**フォークして自分たちで動かす場合、Sync fork で `state.json` が衝突する可能性がある**（未確認）。
+衝突したら、フォーク側の `state.json` を残す。ほかのギルドにも配るようになったら、置き場所を見直す
 
 ## 処理の流れ
 
@@ -313,6 +317,7 @@ python newswatch/newswatch.py --dry-run --source globallab --since 19800  # 1ソ
 
 ## 決定事項
 
+- 2026-09-30 配布元（xross110125-code/bdo-guild-tools）をギルドの本番環境として運用する。投稿先をテスト用からギルドの Discord に切り替え、`state.json` を初期化した
 - 2026-09-30 GitHub の定期実行の抜けを補うため、GAS から `workflow_dispatch` で起動する仕組みを足す（任意。定期実行は予備として残す）
 - 2026-09-30 告知タイトルの書き方が変わって黙って止まる件に、対策を入れる → 無投稿の警告（`quiet_days`）
 
