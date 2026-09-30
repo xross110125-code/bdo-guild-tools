@@ -125,9 +125,24 @@ def post(webhook, content):
     urllib.request.urlopen(req, timeout=30).read()
 
 
+class Maintenance(Exception):
+    """公式サイトがメンテナンス中らしい（取得失敗とは分けて、すぐには警告しない）。"""
+
+
+def _path(url):
+    return urlparse(url).path.rstrip("/").lower()
+
+
 def fetch_items(source):
     req = urllib.request.Request(source["list_url"], headers={"User-Agent": UA})
-    html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
+    resp = urllib.request.urlopen(req, timeout=30)
+    html = resp.read().decode("utf-8", "replace")
+    # メンテナンス中は一覧ではなく案内ページに転送される（日本公式で確認：/ja-JP/shutdown/closetime）
+    if _path(resp.geturl()) != _path(source["list_url"]):
+        raise Maintenance(f"別のページに転送されました: {urlparse(resp.geturl()).path}")
+    for marker in source.get("maintenance_markers") or []:
+        if marker in html:
+            raise Maintenance(f"メンテナンスページの目印 {marker} があります")
     parser = ListParser(source["list_url"], source["id_param"], source["title_class"],
                         source.get("link_attr"))
     parser.feed(html)
@@ -157,6 +172,9 @@ def dry_run(sources, since):
         print(f"== {source['id']}（{source['name']}） Secret {name}: {'登録あり' if webhook else '未登録'}")
         try:
             items = fetch_items(source)
+        except Maintenance as m:
+            print(f"   メンテナンス中と判定: {m}")
+            continue
         except Exception as e:
             print(f"   取得失敗: {e}")
             continue
@@ -169,8 +187,42 @@ def dry_run(sources, since):
             print(f"   [{mark}] {no} {title}\n          {url}")
 
 
+MAINT_WARN_HOURS = 12  # メンテナンス判定がこれ以上続いたら一度だけ知らせる
+
+
+def now():
+    return datetime.now(timezone.utc)
+
+
 def today():
-    return datetime.now(timezone.utc).date()
+    return now().date()
+
+
+def handle_maintenance(source, webhook, st, reason):
+    """メンテナンス中の回。黙って次の回に回すが、長く続いたら一度だけ知らせる。書き換えたら True。
+
+    メンテナンスのたびに警告が出ないようにするため。判定が外れて（ページの作りが変わる等）
+    黙り続けることのないよう、MAINT_WARN_HOURS 時間続いたら知らせる。
+    """
+    sid = source["id"]
+    dirty = False
+    if "maint_since" not in st:
+        st["maint_since"] = now().isoformat(timespec="minutes")
+        dirty = True
+    hours = (now() - datetime.fromisoformat(st["maint_since"])).total_seconds() / 3600
+    print(f"[{sid}] メンテナンス中と判定（{hours:.1f} 時間目）: {reason}")
+    if hours < MAINT_WARN_HOURS or st.get("maint_notified"):
+        return dirty
+    try:
+        post(webhook,
+             f"⚠️ {source['name']}：公式サイトがメンテナンス中の状態が {int(hours)} 時間続いています。\n"
+             "長時間のメンテナンスでなければ、公式サイトの作りが変わった可能性があります。\n"
+             f"<{source['list_url']}>")
+    except Exception as e:
+        print(f"[{sid}] メンテナンス長期化の警告の投稿に失敗: {e}")
+        return dirty
+    st["maint_notified"] = True
+    return True
 
 
 def check_quiet(source, webhook, st):
@@ -204,6 +256,8 @@ def run_source(source, webhook, st):
     sid = source["id"]
     try:
         items = fetch_items(source)
+    except Maintenance as m:
+        return handle_maintenance(source, webhook, st, m)
     except Exception as e:
         print(f"[{sid}] 取得失敗: {e}")
         # 失敗の通知は1回だけ（毎時スパムしない）。ワークフロー自体は失敗にしない
@@ -220,6 +274,9 @@ def run_source(source, webhook, st):
         return True
 
     dirty = st.pop("error_notified", None) is not None
+    for key in ("maint_since", "maint_notified"):
+        if st.pop(key, None) is not None:
+            dirty = True
     last = st.get("last_no")
 
     if last is None:
