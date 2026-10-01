@@ -188,6 +188,7 @@ def dry_run(sources, since):
 
 
 MAINT_WARN_HOURS = 12  # メンテナンス判定がこれ以上続いたら一度だけ知らせる
+FAIL_WARN_HOURS = 2    # 取得失敗がこれ以上続いたら一度だけ知らせる
 
 
 def now():
@@ -225,6 +226,32 @@ def handle_maintenance(source, webhook, st, reason):
     return True
 
 
+def handle_failure(source, webhook, st, err):
+    """取得に失敗した回。FAIL_WARN_HOURS 時間続いたら一度だけ知らせる。書き換えたら True。
+
+    公式サイトが一時的に重い（タイムアウト等）だけで警告が出ないようにするため。
+    ワークフロー自体は失敗にしない。
+    """
+    sid = source["id"]
+    dirty = False
+    if "fail_since" not in st:
+        st["fail_since"] = now().isoformat(timespec="minutes")
+        dirty = True
+    hours = (now() - datetime.fromisoformat(st["fail_since"])).total_seconds() / 3600
+    print(f"[{sid}] 取得失敗（{hours:.1f} 時間目）: {err}")
+    if hours < FAIL_WARN_HOURS or st.get("error_notified"):
+        return dirty
+    try:
+        post(webhook,
+             f"⚠️ {source['name']} の取得に {int(hours)} 時間失敗し続けています（公式サイトの仕様変更の可能性）\n"
+             f"<{source['list_url']}>\n詳細: {err}")
+    except Exception as pe:
+        print(f"[{sid}] 警告の投稿にも失敗: {pe}")
+        return dirty
+    st["error_notified"] = True
+    return True
+
+
 def check_quiet(source, webhook, st):
     """投稿対象が quiet_days 日以上見つかっていなければ、一度だけ警告する。書き換えたら True。
 
@@ -259,22 +286,10 @@ def run_source(source, webhook, st):
     except Maintenance as m:
         return handle_maintenance(source, webhook, st, m)
     except Exception as e:
-        print(f"[{sid}] 取得失敗: {e}")
-        # 失敗の通知は1回だけ（毎時スパムしない）。ワークフロー自体は失敗にしない
-        if st.get("error_notified"):
-            return False
-        try:
-            post(webhook,
-                 f"⚠️ {source['name']} の取得に失敗しました（公式サイトの仕様変更の可能性）\n"
-                 f"<{source['list_url']}>\n詳細: {e}")
-        except Exception as pe:
-            print(f"[{sid}] 警告の投稿にも失敗: {pe}")
-            return False
-        st["error_notified"] = True
-        return True
+        return handle_failure(source, webhook, st, e)
 
     dirty = st.pop("error_notified", None) is not None
-    for key in ("maint_since", "maint_notified"):
+    for key in ("maint_since", "maint_notified", "fail_since"):
         if st.pop(key, None) is not None:
             dirty = True
     last = st.get("last_no")
