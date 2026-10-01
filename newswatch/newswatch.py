@@ -12,9 +12,12 @@
 import argparse
 import json
 import os
+import re
 import sys
+import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
+from html import unescape
 from html.parser import HTMLParser
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -133,12 +136,36 @@ def _path(url):
     return urlparse(url).path.rstrip("/").lower()
 
 
+def log_page(sid, status, url, html):
+    """一覧が取れなかったときに返ってきたページの特徴を、実行ログに書き出す。
+
+    メンテナンスページの目印（maintenance_markers）を後から選べるようにするため。
+    """
+    m = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
+    title = " ".join(unescape(m.group(1)).split()) if m else "-"
+    body = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.S | re.I)
+    text = " ".join(unescape(re.sub(r"<[^>]+>", " ", body)).split())
+    classes = sorted({c for cs in re.findall(r'class="([^"]*)"', html) for c in cs.split()})
+    print(f"[{sid}] --- 返ってきたページ ---")
+    print(f"[{sid}] HTTP {status} / URL {url} / {len(html)} 文字")
+    print(f"[{sid}] title: {title[:200]}")
+    print(f"[{sid}] 本文: {text[:500]}")
+    print(f"[{sid}] class（{len(classes)} 種）: {' '.join(classes[:80])}")
+
+
 def fetch_items(source):
+    sid = source["id"]
     req = urllib.request.Request(source["list_url"], headers={"User-Agent": UA})
-    resp = urllib.request.urlopen(req, timeout=30)
+    try:
+        resp = urllib.request.urlopen(req, timeout=30)
+    except urllib.error.HTTPError as e:
+        # 503 などでもページ本文が返ってくることがあるので、記録してから失敗にする
+        log_page(sid, e.code, e.geturl(), e.read().decode("utf-8", "replace"))
+        raise
     html = resp.read().decode("utf-8", "replace")
     # メンテナンス中は一覧ではなく案内ページに転送される（日本公式で確認：/ja-JP/shutdown/closetime）
     if _path(resp.geturl()) != _path(source["list_url"]):
+        log_page(sid, resp.status, resp.geturl(), html)
         raise Maintenance(f"別のページに転送されました: {urlparse(resp.geturl()).path}")
     for marker in source.get("maintenance_markers") or []:
         if marker in html:
@@ -147,6 +174,7 @@ def fetch_items(source):
                         source.get("link_attr"))
     parser.feed(html)
     if not parser.items:
+        log_page(sid, resp.status, resp.geturl(), html)
         raise RuntimeError("一覧から記事を1件も読み取れませんでした")
     return parser.items
 
