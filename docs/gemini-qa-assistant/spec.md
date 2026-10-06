@@ -1,7 +1,7 @@
-# qa-bot：Gem 設計書
+# gemini-qa-assistant：Gem 設計書
 
 黒い砂漠の質問に答える Gemini の Gem（2026 年 11 月以降はスキル）の設計書。
-全体の方針は [design.md](design.md)、カスタム指示の本文は [gem-instructions.md](gem-instructions.md)。
+全体の方針は [design.md](design.md)、カスタム指示の本文は [instructions.md](instructions.md)。
 
 **このリポジトリが正本。** Gem の設定を変えるときは、先にここを直してから Gem に反映する。
 
@@ -11,7 +11,7 @@
 |---|---|---|
 | 名前 | `黒い砂漠QA` | |
 | 説明 | `黒い砂漠（日本サーバー）の質問に、最新の情報を調べて出典付きで答えます。グローバルラボの先行情報は「予想」として扱います。` | 共有リンクを開いた人に最初に見える |
-| カスタム指示 | [gem-instructions.md](gem-instructions.md) の枠の中身をそのまま貼る | |
+| カスタム指示 | [instructions.md](instructions.md) の枠の中身をそのまま貼る | |
 | デフォルト ツール | なし | Gemini は必要に応じて Google 検索を使う（テスト Gem で検索・出典付きの回答を確認済み） |
 | 知識（ファイル） | なし | 情報の更新が激しいため、ファイルに固定した情報は古くなる。毎回検索させる |
 | 情報源の引用を無効にする | **チェックしない** | 出典を出させたい |
@@ -57,7 +57,7 @@
 
 ## 指示文を更新するとき
 
-1. [gem-instructions.md](gem-instructions.md) を直して commit・push する（正本）
+1. [instructions.md](instructions.md) を直して commit・push する（正本）
 2. Gemini の Gem マネージャーで Gem を開き、カスタム指示を貼り替えて保存
 3. 確認テストのうち、変更に関係するものを行う
 

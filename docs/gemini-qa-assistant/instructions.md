@@ -1,4 +1,4 @@
-# qa-bot：Gem のカスタム指示（下書き）
+# gemini-qa-assistant：カスタム指示
 
 Gemini の Gem の「カスタム指示」欄に、下の枠の中身をそのまま貼る。
 方針の背景は [design.md](design.md)。指示文は共有した相手にも内容を知られる前提で書いている。
