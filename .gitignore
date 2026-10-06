@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Claude skill built by docs/gemini-qa-assistant/make_skill.py
+bdo-qa.zip
