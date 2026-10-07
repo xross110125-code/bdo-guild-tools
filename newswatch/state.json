@@ -1,5 +1,6 @@
 {
   "globallab": {
+    "fail_since": "2026-10-07T10:16+00:00",
     "last_no": 19886,
     "last_target_date": "2026-10-02"
   },
