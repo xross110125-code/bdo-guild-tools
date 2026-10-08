@@ -4,15 +4,11 @@
     "last_target_date": "2026-10-02"
   },
   "jp-event": {
-    "fail_since": "2026-10-07T23:30+00:00",
     "last_no": 12663,
-    "last_target_date": "2026-10-01",
-    "maint_since": "2026-10-07T23:01+00:00"
+    "last_target_date": "2026-10-01"
   },
   "jp-update": {
-    "fail_since": "2026-10-07T23:30+00:00",
     "last_no": 12676,
-    "last_target_date": "2026-09-30",
-    "maint_since": "2026-10-07T23:01+00:00"
+    "last_target_date": "2026-09-30"
   }
 }
