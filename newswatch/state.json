@@ -1,13 +1,16 @@
 {
   "globallab": {
+    "fail_since": "2026-10-17T18:30+00:00",
     "last_no": 19944,
     "last_target_date": "2026-10-16"
   },
   "jp-event": {
+    "fail_since": "2026-10-17T18:30+00:00",
     "last_no": 12722,
     "last_target_date": "2026-10-15"
   },
   "jp-update": {
+    "fail_since": "2026-10-17T18:30+00:00",
     "last_no": 12728,
     "last_target_date": "2026-10-15"
   }
