@@ -8,6 +8,7 @@
     "last_target_date": "2026-10-15"
   },
   "jp-update": {
+    "fail_since": "2026-10-19T13:31+00:00",
     "last_no": 12728,
     "last_target_date": "2026-10-15"
   }
