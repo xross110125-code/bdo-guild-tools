@@ -5,10 +5,12 @@
   },
   "jp-event": {
     "last_no": 12756,
-    "last_target_date": "2026-10-22"
+    "last_target_date": "2026-10-22",
+    "maint_since": "2026-10-28T23:00+00:00"
   },
   "jp-update": {
     "last_no": 12764,
-    "last_target_date": "2026-10-23"
+    "last_target_date": "2026-10-23",
+    "maint_since": "2026-10-28T23:00+00:00"
   }
 }
